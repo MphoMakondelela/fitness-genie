@@ -1,36 +1,117 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Fitness Genie 💪
 
-## Getting Started
+**Your AI-powered personal fitness companion.**
 
-First, run the development server:
+Fitness Genie is a fitness application designed to help users manage their fitness journey through personalised workout programmes and AI-powered coaching.
+
+The application combines a modern web interface, user profile management, and AI integration to provide a more personalised fitness experience.
+
+## 🚀 Features
+
+- **User Authentication:** Secure registration and login using Supabase.
+- **Personalised Profiles:** Users can provide fitness information and goals.
+- **AI Fitness Coach:** Coach Genie helps users generate personalised fitness programmes.
+- **Workout Programmes:** Generate workout plans based on training preferences and experience.
+- **Modern Dashboard:** A central place to access the application's features.
+- **Docker Support:** Run the application using Docker and Docker Compose.
+
+## 🛠️ Technologies Used
+
+| Technology | Purpose |
+|---|---|
+| Next.js | Frontend and application framework |
+| TypeScript | Type-safe development |
+| Tailwind CSS | User interface styling |
+| Supabase | Authentication and profile management |
+| Google Gemini API | AI-powered coaching |
+| Docker | Application containerisation |
+| Git & GitHub | Version control and collaboration |
+
+## 📸 Screenshots
+
+Add screenshots of your application in the `screenshots` folder.
+
+| Dashboard | AI Coach |
+|---|---|
+| ![Dashboard](screenshots/dashboard.png) | ![AI Coach](screenshots/ai-coach.png) |
+
+| Login | Workout Programme |
+|---|---|
+| ![Login](screenshots/login.png) | ![Workout Programme](screenshots/workout-program.png) |
+
+## ⚙️ Installation and Setup
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/MphoMakondelela/fitness-genie.git
+```
+
+### 2. Navigate into the project
+
+```bash
+cd fitness-genie
+```
+
+### 3. Install dependencies
+
+```bash
+npm install
+```
+
+### 4. Configure environment variables
+
+Create a `.env.local` file in the project root and configure the required environment variables:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+Use your own credentials. Never upload API keys or secret environment files to GitHub.
+
+### 5. Start the development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🐳 Running with Docker
 
-## Learn More
+If Docker is installed, you can build and run the application using:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+docker compose up --build -d
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Open `http://localhost:3000` in your browser.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Make sure your Docker environment is configured with the required application variables.
 
-## Deploy on Vercel
+## 🎯 Project Objective
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The objective of Fitness Genie is to demonstrate how modern web technologies and AI integration can be combined to create a personalised fitness application.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The project also provides practical experience in frontend development, backend integration, authentication, API development, and application containerisation.
+
+## 👨‍💻 Developer
+
+**Mpho Makondelela**
+
+Diploma in Computer Science  
+Tshwane University of Technology
+
+GitHub: [MphoMakondelela](https://github.com/MphoMakondelela)
+
+Project: [Fitness Genie](https://github.com/MphoMakondelela/fitness-genie)
+
+---
+
+*Fitness Genie — Building a smarter fitness experience.*
