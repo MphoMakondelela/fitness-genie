@@ -29,7 +29,7 @@ The application combines a modern web interface, user profile management, and AI
 
 ## 📸 Screenshots
 
-Add screenshots of your application in the `screenshots` folder.
+
 
 | Dashboard | AI Coach |
 |---|---|
@@ -88,7 +88,10 @@ http://localhost:3000
 If Docker is installed, you can build and run the application using:
 
 ```bash
-docker compose up --build -d
+docker pull mmakondelela/fitness-genie:1.0
+```
+```bash
+docker run -p 3000:3000 mmakondelela/fitness-genie:1.0
 ```
 
 Open `http://localhost:3000` in your browser.
