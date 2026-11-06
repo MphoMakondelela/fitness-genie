@@ -90,6 +90,7 @@ If Docker is installed, you can build and run the application using:
 ```bash
 docker pull mmakondelela/fitness-genie:1.0
 ```
+
 ```bash
 docker run -p 3000:3000 mmakondelela/fitness-genie:1.0
 ```
@@ -97,6 +98,22 @@ docker run -p 3000:3000 mmakondelela/fitness-genie:1.0
 Open `http://localhost:3000` in your browser.
 
 Make sure your Docker environment is configured with the required application variables.
+
+## Using Ollama for the coach
+
+The coach generation route uses Gemini by default. To use a local Ollama model
+instead, add these settings to `.env.local`:
+
+```env
+AI_PROVIDER=ollama
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=mistral:latest
+```
+
+Make sure Ollama is running and the selected model is installed (for example,
+run `ollama pull mistral:latest`). Restart the Next.js development server after
+changing environment variables. To switch back to Gemini, set
+`AI_PROVIDER=gemini` and configure `GEMINI_API_KEY`.
 
 ## 🎯 Project Objective
 

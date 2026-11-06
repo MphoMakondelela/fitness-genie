@@ -242,7 +242,10 @@ export default function DashboardPage() {
           </h2>
 
           <div className="mt-6 grid gap-5 lg:grid-cols-2">
-            <article className="group rounded-3xl border border-lime-400/20 bg-[#111411] p-7 transition hover:border-lime-400/40 sm:p-8">
+            <Link
+              href="/coach"
+              className="group block rounded-3xl border border-lime-400/20 bg-[#111411] p-7 transition hover:border-lime-400/40 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lime-400 sm:p-8"
+            >
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lime-400/10 text-2xl">
                 ✳
               </div>
@@ -252,10 +255,10 @@ export default function DashboardPage() {
                 nutrition. Your personalized AI chat experience is a feature
                 we&apos;ll build next.
               </p>
-              <span className="mt-6 inline-flex rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-gray-400">
-                Coming soon
+              <span className="mt-6 inline-flex rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-gray-400 transition group-hover:border-lime-400/30 group-hover:text-lime-300">
+                Open your coach →
               </span>
-            </article>
+            </Link>
 
             <article className="group rounded-3xl border border-white/[0.08] bg-[#111411] p-7 transition hover:border-lime-400/30 sm:p-8">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lime-400/10 text-2xl">

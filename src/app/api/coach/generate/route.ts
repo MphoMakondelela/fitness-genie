@@ -4,9 +4,22 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
+type OllamaGenerateResponse = {
+  response?: string;
+};
+
 export async function POST(request: Request) {
   try {
-    if (!process.env.GEMINI_API_KEY) {
+    const provider = process.env.AI_PROVIDER || "gemini";
+
+    if (provider !== "gemini" && provider !== "ollama") {
+      return NextResponse.json(
+        { error: "AI_PROVIDER must be set to 'gemini' or 'ollama'." },
+        { status: 503 }
+      );
+    }
+
+    if (provider === "gemini" && !process.env.GEMINI_API_KEY) {
       return NextResponse.json(
         { error: "The AI service is not configured." },
         { status: 503 }
@@ -84,19 +97,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const ai = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY,
-      httpOptions: {
-        timeout: 240_000,
-      },
-    });
-
-    const response = await ai.interactions.create({
-      model: "gemini-3.8-flash",
-      generation_config: {
-        thinking_level: "low",
-      },
-      input: `
+    const prompt = `
 You are Fitness Genie, a safe, encouraging fitness coach.
 
 Create a personalized weekly workout plan using the information below.
@@ -130,13 +131,82 @@ Avoid extreme exercise, restrictive diets, unnecessary supplements, diagnoses, a
 If the user reports pain, injury, or a medical limitation, avoid potentially aggravating exercises and recommend appropriate professional guidance.
 
 Return plain text with clear headings and bullet points.
-      `,
-    });
+      `;
 
-    const program = response.output_text?.trim();
+    let program: string | undefined;
+
+    if (provider === "ollama") {
+      const ollamaBaseUrl = (
+        process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434"
+      ).replace(/\/+$/, "");
+
+      let ollamaResponse: Response;
+
+      try {
+        ollamaResponse = await fetch(`${ollamaBaseUrl}/api/generate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: process.env.OLLAMA_MODEL || "mistral:latest",
+            prompt,
+            stream: false,
+          }),
+          signal: AbortSignal.timeout(240_000),
+          cache: "no-store",
+        });
+      } catch (error) {
+        console.error("Ollama request failed:", error);
+
+        const timedOut =
+          error instanceof Error && error.name === "TimeoutError";
+
+        return NextResponse.json(
+          {
+            error: timedOut
+              ? "Ollama took too long to respond. Please try again."
+              : "Could not connect to Ollama. Make sure it is running and OLLAMA_BASE_URL is correct.",
+          },
+          { status: timedOut ? 504 : 503 }
+        );
+      }
+
+      if (!ollamaResponse.ok) {
+        console.error("Ollama returned an error:", ollamaResponse.status);
+
+        return NextResponse.json(
+          {
+            error:
+              ollamaResponse.status === 404
+                ? "The configured Ollama model was not found. Check OLLAMA_MODEL."
+                : "Ollama could not generate a plan. Please try again.",
+          },
+          { status: 502 }
+        );
+      }
+
+      const data = (await ollamaResponse.json()) as OllamaGenerateResponse;
+      program = data.response?.trim();
+    } else {
+      const ai = new GoogleGenAI({
+        apiKey: process.env.GEMINI_API_KEY,
+        httpOptions: {
+          timeout: 240_000,
+        },
+      });
+
+      const response = await ai.interactions.create({
+        model: "gemini-3.8-flash",
+        generation_config: {
+          thinking_level: "low",
+        },
+        input: prompt,
+      });
+
+      program = response.output_text?.trim();
+    }
 
     if (!program) {
-      console.error("Gemini returned an empty response.");
+      console.error(`${provider} returned an empty response.`);
 
       return NextResponse.json(
         { error: "The AI coach could not generate a plan. Please try again." },
