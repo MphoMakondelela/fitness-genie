@@ -31,13 +31,17 @@ The application combines a modern web interface, user profile management, and AI
 
 
 
-| Dashboard | AI Coach |
+| Home Page | Dashboard |
 |---|---|
-| ![Dashboard](screenshots/dashboard.jpeg) | ![AI Coach](screenshots/Ai-Coach.jpeg) | ![Home Page](screenshots/home-page.jpeg) |
+| ![Home Page](screenshots/home-page.jpeg) | ![Dashboard](screenshots/dashboard.jpeg) |
 
-| Login | Workout Programme |
+| SignUp | LogIn |
 |---|---|
-| ![Login](screenshots/login.jpeg) | ![Sign Up](screenshots/signup.jpeg) |
+| ![Sign Up](screenshots/signup.jpeg) | ![Login](screenshots/login.jpeg) |
+
+| AI Coach |  |
+|---|---|
+|  ![AI Coach](screenshots/Ai-Coach.jpeg) |
 
 ## ⚙️ Installation and Setup
 
