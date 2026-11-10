@@ -33,11 +33,11 @@ The application combines a modern web interface, user profile management, and AI
 
 | Dashboard | AI Coach |
 |---|---|
-| ![Dashboard](screenshots/dashboard.png) | ![AI Coach](screenshots/ai-coach.png) |
+| ![Dashboard](screenshots/dashboard.jpeg) | ![AI Coach](screenshots/Ai-Coach.jpeg) | ![Home Page](screenshots/home-page.jpeg) |
 
 | Login | Workout Programme |
 |---|---|
-| ![Login](screenshots/login.png) | ![Workout Programme](screenshots/workout-program.png) |
+| ![Login](screenshots/login.jpeg) | ![Sign Up](screenshots/signup.jpeg) |
 
 ## ⚙️ Installation and Setup
 
