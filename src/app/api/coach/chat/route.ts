@@ -11,13 +11,6 @@ type ChatMessage = {
   content: string;
 };
 
-type OllamaChatResponse = {
-  message?: {
-    content?: unknown;
-  };
-  error?: unknown;
-};
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -79,9 +72,12 @@ const FITNESS_KEYWORDS = [
 ];
 
 function isClearlyFitnessRelated(message: string): boolean {
-  const normalised = message.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const normalised = message
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 
-  return FITNESS_KEYWORDS.some((keyword) => {
+  const matchesKeyword = FITNESS_KEYWORDS.some((keyword) => {
     const normalisedKeyword = keyword
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, " ")
@@ -89,6 +85,15 @@ function isClearlyFitnessRelated(message: string): boolean {
 
     return ` ${normalised} `.includes(` ${normalisedKeyword} `);
   });
+
+  const matchesWorkoutRequest =
+    /\bwork\s*out\b/i.test(message) ||
+    /\b(workout|exercise|fitness|training)\s+(plan|program|programme|routine)\b/i.test(message) ||
+    /\b(create|write|make|build|design)\s+(me\s+)?(a\s+)?(workout|exercise|fitness|training)\b/i.test(
+      message
+    );
+
+  return matchesKeyword || matchesWorkoutRequest;
 }
 
 export async function POST(request: NextRequest) {
@@ -134,9 +139,30 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const isFitnessRequest = isClearlyFitnessRelated(
-    latestUserMessage.content
-  );
+  // Check whether the latest message is a short follow-up.
+  const latestText = latestUserMessage.content.trim();
+
+  const wordCount = latestText.split(/\s+/).length;
+
+  const isContextualFollowUp =
+    wordCount <= 15 &&
+    /\b(plan|programme|program|routine|it|that|this|suitable|adjust|modify|change|experience|level|goal)\b/i.test(
+      latestText
+    );
+
+  // Check recent user messages for fitness-related context.
+  const previousUserMessages = validMessages
+    .filter((message) => message.role === "user")
+    .slice(0, -1);
+
+  const hasRecentFitnessContext = previousUserMessages
+    .slice(-4)
+    .some((message) => isClearlyFitnessRelated(message.content));
+
+  // Accept fitness requests and relevant follow-ups.
+  const isFitnessRequest =
+    isClearlyFitnessRelated(latestText) ||
+    (isContextualFollowUp && hasRecentFitnessContext);
 
   console.log("FITNESS GENIE GUARDRAIL:", {
     message: latestUserMessage.content,
@@ -282,19 +308,19 @@ SAFETY:
 - Recommend professional guidance for medical concerns.
 
 WEEKLY WORKOUT PLANS:
-When requested:
-- Match the user's available training days.
-- Include suitable exercises, sets and repetitions.
-- Include warm-up and cool-down guidance.
-- Allow appropriate recovery.
-- Respect available equipment and experience.
+- Complete every requested day.
+- Include 2-3 exercises per day.
+- Include sets and repetitions.
+- Include recovery days where appropriate.
+- Never stop a list halfway through.
+- Finish the entire plan before ending the response.
 
 RESPONSE STYLE:
-- Answer the actual question.
-- Keep ordinary answers concise.
-- Use headings and bullet points when useful.
-- Ask one relevant follow-up question at a time.
-- Do not force every response into a fixed format.
+- Be concise and direct.
+- Avoid lengthy introductions.
+- Use simple headings and bullet points.
+- Keep workout plans around 150-200 words.
+- Do not explain every exercise unless requested.
 
 Always remain Fitness Genie.
 `;
@@ -326,7 +352,7 @@ Always remain Fitness Genie.
 
         body: JSON.stringify({
           model: process.env.OLLAMA_MODEL || "qwen3:8b",
-          stream: false,
+          stream: true,
           // Reduce unnecessary thinking time
           think: false,
           // Keep the model loaded between messages
@@ -336,9 +362,9 @@ Always remain Fitness Genie.
             ...validMessages,
           ],
           options: {
-            temperature: 0.5,
+            temperature: 0.3,
             num_ctx: 4096,
-            num_predict: 1024,
+            num_predict: 500,
           },
         }),
 
@@ -382,47 +408,16 @@ Always remain Fitness Genie.
       );
     }
 
-    let data: OllamaChatResponse;
-
-    try {
-      data = (await ollamaResponse.json()) as OllamaChatResponse;
-    } catch (error) {
-      console.error("Ollama returned an incomplete or invalid response:", error);
-
-      const timedOut =
-        error instanceof Error && error.name === "TimeoutError";
-
-      return Response.json(
-        {
-          error: timedOut
-            ? "The AI took too long to respond. Please try again."
-            : "Ollama returned an incomplete response. Please try again.",
-        },
-        { status: timedOut ? 504 : 502 }
-      );
-    }
-
-    if (typeof data.error === "string") {
-      console.error("Ollama chat error:", data.error);
-
-      return Response.json(
-        { error: "Ollama could not generate a response." },
-        { status: 502 }
-      );
-    }
-
-    const reply = data.message?.content;
-
-    if (typeof reply !== "string" || !reply.trim()) {
-      console.error("Ollama returned an empty chat response.");
-
-      return Response.json(
-        { error: "The AI returned an empty response. Please try again." },
-        { status: 502 }
-      );
-    }
-
-    return Response.json({ reply });
+    // Forward Ollama's NDJSON stream directly to the browser.
+    // This allows Fitness Genie to display its response as it is generated.
+    return new Response(ollamaResponse.body, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/x-ndjson; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        "X-Accel-Buffering": "no",
+      },
+    });
 
   } catch (error) {
     console.error("Fitness Genie API error:", error);

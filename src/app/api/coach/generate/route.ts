@@ -8,6 +8,27 @@ type OllamaGenerateResponse = {
   response?: string;
 };
 
+type WorkoutExercise = {
+  name: string;
+  sets: number;
+  reps: string;
+  restSeconds: number;
+};
+
+type WorkoutDay = {
+  day: string;
+  focus: string;
+  isRestDay: boolean;
+  exercises: WorkoutExercise[];
+};
+
+type WorkoutPlan = {
+  title: string;
+  goal: string;
+  experienceLevel: string;
+  days: WorkoutDay[];
+};
+
 export async function POST(request: Request) {
   try {
     const provider = process.env.AI_PROVIDER || "gemini";
@@ -98,9 +119,9 @@ export async function POST(request: Request) {
     }
 
     const prompt = `
-You are Fitness Genie, a safe, encouraging fitness coach.
+You are Fitness Genie, a professional fitness coach.
 
-Create a personalized weekly workout plan using the information below.
+Create a personalised and safe weekly workout plan.
 
 USER PROFILE:
 ${JSON.stringify(profile, null, 2)}
@@ -117,21 +138,49 @@ ${JSON.stringify(
   2
 )}
 
-Include:
+REQUIREMENTS:
 
-1. A short welcome and the main goal of the plan.
-2. A weekly schedule matching the user's available workout days.
-3. Exercises, sets, reps, and rest periods for each session.
-4. A brief warm-up and cool-down.
-5. Simple recovery, hydration, and sleep advice.
-6. Safe, gradual progression guidance.
-Keep the plan concise, practical, and easy to follow.
-Respect the user's experience, equipment, time limit, goals, and limitations.
-Avoid extreme exercise, restrictive diets, unnecessary supplements, diagnoses, and guaranteed results.
-If the user reports pain, injury, or a medical limitation, avoid potentially aggravating exercises and recommend appropriate professional guidance.
+1. Generate exactly 7 days, Monday to Sunday.
+2. Match the user's available workout days.
+3. Use the remaining days as appropriate recovery or rest days.
+4. Respect the user's experience level and fitness goal.
+5. Respect available equipment and stated limitations.
+6. Include 2-4 exercises on each training day.
+7. Include exercise name, sets, reps and restSeconds.
+8. Rest days must have an empty exercises array.
+9. Keep workouts within the requested duration.
+10. Include safe warm-up and cool-down guidance.
+11. Avoid excessive training volume and unsafe recommendations.
 
-Return plain text with clear headings and bullet points.
-      `;
+RETURN ONLY VALID JSON.
+
+Use this exact structure:
+
+{
+  "title": "Personalised Weekly Workout Plan",
+  "goal": "Build strength",
+  "experienceLevel": "Intermediate",
+  "days": [
+    {
+      "day": "Monday",
+      "focus": "Upper Body",
+      "isRestDay": false,
+      "exercises": [
+        {
+          "name": "Bench Press",
+          "sets": 3,
+          "reps": "8-10",
+          "restSeconds": 90
+        }
+      ]
+    }
+  ]
+}
+
+The days array must contain exactly seven days.
+Use the correct weekday order.
+Do not include Markdown or explanations outside the JSON.
+`;
 
     let program: string | undefined;
 
@@ -147,9 +196,15 @@ Return plain text with clear headings and bullet points.
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: process.env.OLLAMA_MODEL || "mistral:latest",
+            model: process.env.OLLAMA_MODEL || "qwen3:8b",
             prompt,
             stream: false,
+            format: "json",
+            options: {
+              temperature: 0.2,
+              num_ctx: 4096,
+              num_predict: 1800,
+            },
           }),
           signal: AbortSignal.timeout(240_000),
           cache: "no-store",

@@ -5,8 +5,25 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 
+type UserProfile = {
+  full_name: string | null;
+  fitness_goal: string | null;
+  experience_level: string | null;
+  workout_days: number | string | null;
+  available_equipment: string[] | null;
+};
+
+function formatLabel(value: string | null | undefined) {
+  if (!value) return "Not set yet";
+
+  return value
+    .replace(/[_-]/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 export default function DashboardPage() {
   const [name, setName] = useState("there");
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
@@ -24,9 +41,15 @@ export default function DashboardPage() {
         return;
       }
 
-      const { data: profile, error: profileError } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("full_name")
+        .select(`
+          full_name,
+          fitness_goal,
+          experience_level,
+          workout_days,
+          available_equipment
+        `)
         .eq("id", user.id)
         .maybeSingle();
 
@@ -36,12 +59,16 @@ export default function DashboardPage() {
         return;
       }
 
-      if (!profile) {
+      if (!profileData) {
         window.location.replace("/profile");
         return;
       }
 
-      const fullName = profile.full_name;
+      const userProfile = profileData as UserProfile;
+
+      setProfile(userProfile);
+
+      const fullName = userProfile.full_name;
 
       if (fullName?.trim()) {
         setName(fullName.trim().split(/\s+/)[0]);
@@ -149,15 +176,7 @@ export default function DashboardPage() {
               consistent and make progress at your own pace.
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/profile"
-                className="rounded-xl bg-lime-400 px-6 py-3.5 font-bold text-black transition hover:-translate-y-0.5 hover:bg-lime-300"
-              >
-                Set up your profile →
-              </Link>
-
-            </div>
+           
           </div>
         </section>
 
@@ -172,12 +191,15 @@ export default function DashboardPage() {
                 Your fitness at a glance
               </h2>
             </div>
+
             <p className="text-sm text-gray-500">
-              Your personal statistics will appear here.
+              Your personal fitness information.
             </p>
           </div>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
+            {/* Fitness Goal */}
             <article className="rounded-2xl border border-white/[0.08] bg-[#111411] p-6 transition hover:border-lime-400/25">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-400">Fitness goal</p>
@@ -185,49 +207,102 @@ export default function DashboardPage() {
                   ◎
                 </span>
               </div>
-              <h3 className="mt-5 text-xl font-bold">Not set yet</h3>
+
+              <h3 className="mt-5 text-xl font-bold">
+                {formatLabel(profile?.fitness_goal)}
+              </h3>
+
               <p className="mt-2 text-sm leading-6 text-gray-500">
-                Choose what you want to work towards.
+                Your current fitness objective.
               </p>
+
               <Link
                 href="/profile"
                 className="mt-5 inline-block text-sm font-semibold text-lime-400 hover:text-lime-300"
               >
-                Choose a goal →
+                Edit goal →
               </Link>
             </article>
 
+            {/* Experience Level */}
             <article className="rounded-2xl border border-white/[0.08] bg-[#111411] p-6 transition hover:border-lime-400/25">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-400">Workout plan</p>
+                <p className="text-sm text-gray-400">Experience level</p>
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-lime-400/10 text-xl">
-                  ↗
+                  ✳
                 </span>
               </div>
-              <h3 className="mt-5 text-xl font-bold">Ready when you are</h3>
+
+              <h3 className="mt-5 text-xl font-bold">
+                {formatLabel(profile?.experience_level)}
+              </h3>
+
               <p className="mt-2 text-sm leading-6 text-gray-500">
-                Your training plan can be created around your schedule.
+                Your selected training experience.
               </p>
+
               <Link
                 href="/profile"
                 className="mt-5 inline-block text-sm font-semibold text-lime-400 hover:text-lime-300"
               >
-                Get started →
+                Update level →
               </Link>
             </article>
 
-            <article className="rounded-2xl border border-white/[0.08] bg-[#111411] p-6 transition hover:border-lime-400/25 sm:col-span-2 xl:col-span-1">
+            {/* Training Schedule */}
+            <article className="rounded-2xl border border-white/[0.08] bg-[#111411] p-6 transition hover:border-lime-400/25">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-400">Progress tracking</p>
+                <p className="text-sm text-gray-400">Training schedule</p>
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-lime-400/10 text-xl">
-                  ↗
+                  ◷
                 </span>
               </div>
-              <h3 className="mt-5 text-xl font-bold">Your story starts here</h3>
+
+              <h3 className="mt-5 text-xl font-bold">
+                {profile?.workout_days
+                  ? `${profile.workout_days} days`
+                  : "Not set yet"}
+              </h3>
+
               <p className="mt-2 text-sm leading-6 text-gray-500">
-                Your completed workouts and progress will be shown here once
-                tracking is implemented.
+                Your planned training days per week.
               </p>
+
+              <Link
+                href="/profile"
+                className="mt-5 inline-block text-sm font-semibold text-lime-400 hover:text-lime-300"
+              >
+                Edit schedule →
+              </Link>
+            </article>
+
+            {/* Available Equipment */}
+            <article className="rounded-2xl border border-white/[0.08] bg-[#111411] p-6 transition hover:border-lime-400/25">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-400">Available equipment</p>
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-lime-400/10 text-xl">
+                  ◈
+                </span>
+              </div>
+
+              <h3 className="mt-5 text-xl font-bold">
+                {profile?.available_equipment?.length
+                  ? `${profile.available_equipment.length} selected`
+                  : "Not set yet"}
+              </h3>
+
+              <p className="mt-2 text-sm leading-6 text-gray-500">
+                {profile?.available_equipment?.length
+                  ? profile.available_equipment.join(", ")
+                  : "Your available training equipment."}
+              </p>
+
+              <Link
+                href="/profile"
+                className="mt-5 inline-block text-sm font-semibold text-lime-400 hover:text-lime-300"
+              >
+                Edit equipment →
+              </Link>
             </article>
           </div>
         </section>
@@ -251,33 +326,37 @@ export default function DashboardPage() {
               </div>
               <h3 className="mt-5 text-2xl font-bold">Your AI fitness coach</h3>
               <p className="mt-3 max-w-lg leading-7 text-gray-400">
-                Get guidance on training, healthy habits, recovery and
-                nutrition. Your personalized AI chat experience is a feature
-                we&apos;ll build next.
+                Chat with your AI fitness coach for personalized guidance
+                on training, healthy habits, recovery and nutrition.
               </p>
               <span className="mt-6 inline-flex rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-gray-400 transition group-hover:border-lime-400/30 group-hover:text-lime-300">
                 Open your coach →
               </span>
             </Link>
 
-            <article className="group rounded-3xl border border-white/[0.08] bg-[#111411] p-7 transition hover:border-lime-400/30 sm:p-8">
+            <Link
+              href="/profile"
+              className="group block rounded-3xl border border-white/[0.08] bg-[#111411] p-7 transition hover:border-lime-400/30 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lime-400 sm:p-8"
+            >
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lime-400/10 text-2xl">
                 ◈
               </div>
-              <h3 className="mt-5 text-2xl font-bold">Personal fitness profile</h3>
+              <h3 className="mt-5 text-xl font-bold">
+                Personal fitness profile
+              </h3>
               <p className="mt-3 max-w-lg leading-7 text-gray-400">
                 Set your goals, experience level, available equipment and
                 preferences so we can shape Fitness Genie around you.
               </p>
-              <Link
-                href="/profile"
-                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white/[0.06] px-5 py-3 font-semibold transition group-hover:bg-lime-400 group-hover:text-black"
-              >
-                Set up your profile <span aria-hidden="true">→</span>
-              </Link>
-            </article>
+              <span className="mt-5 inline-flex text-sm font-semibold text-lime-400">
+                Edit profile →
+              </span>
+            </Link>
 
-            <article className="rounded-3xl border border-white/[0.08] bg-[#111411] p-7 sm:p-8">
+            <Link
+              href="/workout-planner"
+              className="group block rounded-3xl border border-white/[0.08] bg-[#111411] p-7 transition hover:border-lime-400/30 sm:p-8"
+            >
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lime-400/10 text-2xl">
                 ◉
               </div>
@@ -286,42 +365,34 @@ export default function DashboardPage() {
                 Build a routine that reflects your fitness level, schedule and
                 available equipment.
               </p>
-            </article>
+              <span className="mt-5 inline-flex text-sm font-semibold text-lime-400">
+                Open workout planner →
+              </span>
+            </Link>
 
-            <article className="rounded-3xl border border-white/[0.08] bg-[#111411] p-7 sm:p-8">
+            <Link
+              href="/nutrition"
+              className="group block rounded-3xl border border-white/[0.08] bg-[#111411] p-7 transition hover:border-lime-400/30 sm:p-8"
+            >
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lime-400/10 text-2xl">
                 ◌
               </div>
-              <h3 className="mt-5 text-xl font-bold">Nutrition planning</h3>
+              <h3 className="mt-5 text-xl font-bold">
+                Nutrition planning
+              </h3>
               <p className="mt-3 leading-7 text-gray-400">
                 Explore meal ideas that work with your food preferences and
                 everyday routine.
               </p>
-            </article>
+              <span className="mt-5 inline-flex text-sm font-semibold text-lime-400">
+                Explore nutrition planning →
+              </span>
+            </Link>
           </div>
         </section>
 
         {/* Closing banner */}
-        <section className="mt-10 rounded-3xl border border-lime-400/15 bg-lime-400/[0.04] p-7 sm:flex sm:items-center sm:justify-between sm:gap-8 sm:p-9">
-          <div>
-            <p className="text-xs font-bold tracking-[0.2em] text-lime-400">
-              MAKE IT PERSONAL
-            </p>
-            <h2 className="mt-3 text-2xl font-bold">
-              Start with your fitness goals.
-            </h2>
-            <p className="mt-2 max-w-xl leading-7 text-gray-400">
-              A little information will help us build an experience around
-              your needs.
-            </p>
-          </div>
-          <Link
-            href="/profile"
-            className="mt-6 inline-flex shrink-0 rounded-xl bg-lime-400 px-6 py-3.5 font-bold text-black transition hover:bg-lime-300 sm:mt-0"
-          >
-            Get started →
-          </Link>
-        </section>
+        
 
         <footer className="mt-12 border-t border-white/[0.08] py-6 text-sm text-gray-500 sm:flex sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Fitness Genie</p>

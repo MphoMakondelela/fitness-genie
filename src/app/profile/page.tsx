@@ -111,7 +111,7 @@ export default function ProfilePage() {
 
       if (error) throw error;
 
-      router.replace("/coach");
+      router.replace("/dashboard");
     } catch (error) {
       setMessage(
         error instanceof Error
